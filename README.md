@@ -25,17 +25,18 @@ Also see [example.js](https://github.com/deoxxa/xml-c14n/blob/master/example.js)
 ```javascript
 #!/usr/bin/env node
 
-var c14n = require("xml-c14n"),
-    xmldom = require("xmldom");
+var xmldom = require("xmldom");
 
 var c14n = require("xml-c14n"),
     algorithm = c14n.exc_c14n;
 
-var xml = '<!-- this is a test --><x:a xmlns:y ="002"    xmlns:x="001" y:b="what\r\n&amp;" ><!-- lol what --><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a><!-- trailing comment! -->',
-    doc = (new xmldom.DOMParser()).parseFromString(xml);
-    res = algorithm.canonicalise(doc, true);
+var withComments = true;
 
-console.log("canonicalising with algorithm: " + algorithm.algorithmName());
+var xml = '<?xml version="1.0"?>\n\n<?xml-stylesheet   href="doc.xsl"\n   type="text/xsl"   ?>\n\n<!DOCTYPE doc SYSTEM "doc.dtd">\n\n<doc>Hello, world!<!-- Comment 1 --></doc>\n\n<?pi-without-data     ?>\n\n<!-- Comment 2 -->\n\n<!-- Comment 3 -->',
+    doc = (new xmldom.DOMParser()).parseFromString(xml);
+    res = algorithm.canonicalise(doc, withComments);
+
+console.log("canonicalising with algorithm: " + algorithm.algorithmName(withComments));
 console.log("");
 
 console.log("INPUT");
@@ -50,18 +51,33 @@ console.log(res);
 ```
 
 ```
-canonicalising with algorithm: http://www.w3.org/2001/10/xml-exc-c14n#
+canonicalising with algorithm: http://www.w3.org/2001/10/xml-exc-c14n#WithComments
 
 INPUT
 
-<!-- this is a test --><x:a xmlns:y ="002"    xmlns:x="001" y:b="what
-&amp;" ><!-- lol what --><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a><!-- trailing comment! -->
+<?xml version="1.0"?>
+
+<?xml-stylesheet   href="doc.xsl"
+   type="text/xsl"   ?>
+
+<!DOCTYPE doc SYSTEM "doc.dtd">
+
+<doc>Hello, world!<!-- Comment 1 --></doc>
+
+<?pi-without-data     ?>
+
+<!-- Comment 2 -->
+
+<!-- Comment 3 -->
 
 RESULT
 
-<!-- this is a test -->
-<x:a xmlns:x="001" xmlns:y="002" y:b="what&#xD;&#xA;&amp;"><!-- lol what --><z:c xmlns:z="003"></z:c> lol here is some "text" &amp; "data"</x:a>
-<!-- trailing comment! -->
+<?xml-stylesheet href="doc.xsl"
+   type="text/xsl"?>
+<doc>Hello, world!<!-- Comment 1 --></doc>
+<?pi-without-data?>
+<!-- Comment 2 -->
+<!-- Comment 3 -->
 ```
 
 Installation
