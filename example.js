@@ -5,9 +5,9 @@ var xmldom = require("xmldom");
 var c14n = require("./"),
     algorithm = c14n.exc_c14n;
 
-var xml = '<x:a xmlns:y ="002"    xmlns:x="001" y:b="what\r\n&amp;" ><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a>',
+var xml = '<!-- this is a test --><x:a xmlns:y ="002"    xmlns:x="001" y:b="what\r\n&amp;" ><!-- lol what --><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a><!-- trailing comment! -->',
     doc = (new xmldom.DOMParser()).parseFromString(xml);
-    res = algorithm.canonicalise(doc);
+    res = algorithm.canonicalise(doc, true);
 
 console.log("canonicalising with algorithm: " + algorithm.algorithmName());
 console.log("");

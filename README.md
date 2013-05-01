@@ -31,9 +31,9 @@ var c14n = require("xml-c14n"),
 var c14n = require("xml-c14n"),
     algorithm = c14n.exc_c14n;
 
-var xml = '<x:a xmlns:y ="002"    xmlns:x="001" y:b="what\r\n&amp;" ><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a>',
+var xml = '<!-- this is a test --><x:a xmlns:y ="002"    xmlns:x="001" y:b="what\r\n&amp;" ><!-- lol what --><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a><!-- trailing comment! -->',
     doc = (new xmldom.DOMParser()).parseFromString(xml);
-    res = algorithm.canonicalise(doc);
+    res = algorithm.canonicalise(doc, true);
 
 console.log("canonicalising with algorithm: " + algorithm.algorithmName());
 console.log("");
@@ -54,12 +54,14 @@ canonicalising with algorithm: http://www.w3.org/2001/10/xml-exc-c14n#
 
 INPUT
 
-<x:a xmlns:y ="002"    xmlns:x="001" y:b="what
-&amp;" ><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a>
+<!-- this is a test --><x:a xmlns:y ="002"    xmlns:x="001" y:b="what
+&amp;" ><!-- lol what --><z:c xmlns:z   = "003"/> lol here is some "text" &amp; "data"</x:a><!-- trailing comment! -->
 
 RESULT
 
-<x:a xmlns:x="001" xmlns:y="002" y:b="what&#xD;&#xA;&amp;"><z:c xmlns:z="003"></z:c> lol here is some "text" &amp; "data"</x:a>
+<!-- this is a test -->
+<x:a xmlns:x="001" xmlns:y="002" y:b="what&#xD;&#xA;&amp;"><!-- lol what --><z:c xmlns:z="003"></z:c> lol here is some "text" &amp; "data"</x:a>
+<!-- trailing comment! -->
 ```
 
 Installation
@@ -82,17 +84,19 @@ Creates a canonical serialised representation of a DOM object according to the
 rules laid out in [xml-exc-c14n](http://www.w3.org/TR/xml-exc-c14n/).
 
 ```javascript
-c14n.exc_c14n.canonicalise(doc);
+c14n.exc_c14n.canonicalise(doc, includeComments);
 ```
 
 ```javascript
 // outputs a string of XML
-console.log(c14n.exc_c14n.canonicalise(doc));
+console.log(c14n.exc_c14n.canonicalise(doc, true));
 ```
 
 Arguments
 
 * _doc_ - a DOM object implementing [DOM Level 1](http://www.w3.org/TR/REC-DOM-Level-1/)
+* _includeComments_ - a boolean value determining whether to include comments in
+  the resultant XML
 
 **exc_c14n.algorithmName**
 
