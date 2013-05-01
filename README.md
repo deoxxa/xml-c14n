@@ -50,6 +50,8 @@ console.log(res);
 ```
 
 ```
+canonicalising with algorithm: http://www.w3.org/2001/10/xml-exc-c14n#
+
 INPUT
 
 <x:a xmlns:y ="002"    xmlns:x="001" y:b="what
