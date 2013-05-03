@@ -1,6 +1,6 @@
 {
   "name": "xml-c14n",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "XML canonicalisation",
   "main": "index.js",
   "repository": {
