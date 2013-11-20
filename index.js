@@ -27,6 +27,10 @@ CanonicalisationFactory.prototype.registerAlgorithm = function registerAlgorithm
   return this;
 };
 
-CanonicalisationFactory.prototype.createAlgorithm = function createAlgorithm(uri, options) {
+CanonicalisationFactory.prototype.getAlgorithm = function getAlgorithm(uri) {
+  return this.algorithms[uri];
+};
+
+CanonicalisationFactory.prototype.createCanonicaliser = function createCanonicaliser(uri, options) {
   return this.algorithms[uri](options);
 };
