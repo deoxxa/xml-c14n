@@ -13,9 +13,22 @@ the [DOM Level 1](http://www.w3.org/TR/REC-DOM-Level-1/) API will suffice. I
 recommend [xmldom](https://github.com/jindw/xmldom) if you're working with node,
 or your browser's native DOM implementation if you're not.
 
-This module was primarily adapted from some code in [xml-crypto](https://github.com/yaronn/xml-crypto)
+This module was originally adapted from some code in [xml-crypto](https://github.com/yaronn/xml-crypto)
 by Yaron Naveh, and as such is also covered by any additional conditions in the
 license of that codebase (which just so happens to be the MIT license).
+
+Apology
+-------
+
+Look, I know the API feels like Java. It pains me as much to work on it as it
+will pain you to use it. This whole XML thing is a crock of shit, and is so
+over-engineered that a factory (yeah, you heard me right) was the best way to
+implement it. So yeah... Sorry.
+
+No Apology
+----------
+
+I spell canonicalise with an "s". Deal with it.
 
 Super Quickstart
 ----------------
@@ -27,30 +40,35 @@ Also see [example.js](https://github.com/deoxxa/xml-c14n/blob/master/example.js)
 
 var xmldom = require("xmldom");
 
-var c14n = require("xml-c14n"),
-    algorithm = c14n.exc_c14n;
+var c14n = require("xml-c14n")();
 
-var withComments = true;
+var xmlData = require("fs").readFileSync(process.argv[2], "utf8"),
+    document = (new xmldom.DOMParser()).parseFromString(xmlData);
 
-var xml = '<?xml version="1.0"?>\n\n<?xml-stylesheet   href="doc.xsl"\n   type="text/xsl"   ?>\n\n<!DOCTYPE doc SYSTEM "doc.dtd">\n\n<doc>Hello, world!<!-- Comment 1 --></doc>\n\n<?pi-without-data     ?>\n\n<!-- Comment 2 -->\n\n<!-- Comment 3 -->',
-    doc = (new xmldom.DOMParser()).parseFromString(xml);
-    res = algorithm.canonicalise(doc, withComments);
+var canonicaliser = c14n.createCanonicaliser("http://www.w3.org/2001/10/xml-exc-c14n#WithComments");
 
-console.log("canonicalising with algorithm: " + algorithm.algorithmName(withComments));
+console.log("canonicalising with algorithm: " + canonicaliser.name());
 console.log("");
 
 console.log("INPUT");
 console.log("");
-console.log(xml);
+console.log(xmlData);
 
 console.log("");
 
-console.log("RESULT");
-console.log("");
-console.log(res);
+canonicaliser.canonicalise(document.documentElement, function(err, res) {
+  if (err) {
+    return console.warn(err.stack);
+  }
+
+  console.log("RESULT");
+  console.log("");
+  console.log(res);
+});
 ```
 
 ```
+➜  xml-c14n git:(master) ./example.js small.xml
 canonicalising with algorithm: http://www.w3.org/2001/10/xml-exc-c14n#WithComments
 
 INPUT
@@ -70,14 +88,10 @@ INPUT
 
 <!-- Comment 3 -->
 
+
 RESULT
 
-<?xml-stylesheet href="doc.xsl"
-   type="text/xsl"?>
 <doc>Hello, world!<!-- Comment 1 --></doc>
-<?pi-without-data?>
-<!-- Comment 2 -->
-<!-- Comment 3 -->
 ```
 
 Installation
@@ -94,73 +108,138 @@ Or via git:
 API
 ---
 
-**exc_c14n.canonicalise**
+**CanonicalisationFactory**
 
-Creates a canonical serialised representation of a DOM object according to the
-rules laid out in [xml-exc-c14n](http://www.w3.org/TR/xml-exc-c14n/).
+This is what you get when you `require("xml-c14n")`. It's a factory for getting
+canonicaliser implementation instances.
 
 ```javascript
-c14n.exc_c14n.canonicalise(doc, includeComments);
+CanonicalisationFactory(options)
 ```
 
 ```javascript
-// outputs a string of XML
-console.log(c14n.exc_c14n.canonicalise(doc, true));
+var c14n = new CanonicalisationFactory();
+// OR
+var c14n = CanonicalisationFactory();
+// THUS
+var c14n = require("xml-c14n")();
 ```
 
-Arguments
+**CanonicalisationFactory.registerAlgorithm**
 
-* _doc_ - a DOM object implementing [DOM Level 1](http://www.w3.org/TR/REC-DOM-Level-1/)
-* _includeComments_ - a boolean value determining whether to include comments in
-  the resultant XML
-
-**exc_c14n.algorithmName**
-
-Returns the name of the canonicalisation algorithm. This will be more useful if
-there is ever more than one algorithm implemented.
+This is how you get a specific canonicalisation algorithm implementation into a
+factory so that it can be instantiated within and returned to callers. You give
+it a URI and a factory function (sup dog) and it'll shove it into an object
+internally so it can be retrieved later on.
 
 ```javascript
-c14n.exc_c14n.algorithmName()
-```
-
-```javascript
-// outputs "http://www.w3.org/2001/10/xml-exc-c14n#"
-console.log(c14n.exc_c14n.algorithmName());
-```
-
-**escape.attributeEntities**
-
-Escapes special entities in an attribute's value according to [xml-c14n#2.3](http://www.w3.org/TR/xml-c14n#ProcessingModel).
-
-```javascript
-c14n.escape.attributeEntities(string);
+c14n.registerAlgorithm(uri, factoryFunction)
 ```
 
 ```javascript
-// outputs "&amp;&lt;&quot;&#x9;&#xD;&#xA;"
-console.log(c14n.escape.attributeEntities("&<\"\t\r\n"));
+c14n.registerAlgorithm("http://herp.derp/", function(options) {
+  return new HerpDerp(options);
+});
 ```
 
 Arguments
 
-* _string_ - a string with unescaped entities in it
+* _uri_ - a URI to identify the algorithm
+* _factoryFunction_ - a function that creates instances of the algorithm's
+  implementation
 
-**escape.textEntities**
+**CanonicalisationFactory.getAlgorithm**
 
-Escapes special entities in a text node's data according to [xml-c14n#2.3](http://www.w3.org/TR/xml-c14n#ProcessingModel).
+This lets you get the factory function for an algorithm. Not incredibly useful,
+but here for completeness.
 
 ```javascript
-c14n.escape.textEntities(string);
+c14n.getAlgorithm(uri)
 ```
 
 ```javascript
-// outputs "&amp;&lt;&gt;&#xD;"
-console.log(c14n.escape.textEntities("&<>\r"));
+var herpDerpFactory = c14n.getAlgorithm("http://herp.derp/");
 ```
 
 Arguments
 
-* _string_ - a string with unescaped entities in it
+* _uri_ - the URI identifying the algorithm to fetch the factory function for
+
+**CanonicalisationFactory.createCanonicaliser**
+
+Creates an instance of a canonicaliser, referenced by its URI, and optionally
+passing along something for the new instance.
+
+```javascript
+c14n.createCanonicaliser(uri, [options]);
+```
+
+```javascript
+// creates an xml-exc-c14n canonicaliser
+var canonicaliser = c14n.createCanonicaliser("http://www.w3.org/2001/10/xml-exc-c14n#");
+```
+
+**Algorithm**
+
+This is the abstract "class" that all specific algorithms (should) extend. It
+provides some stubbed out methods that do nothing useful aside from serving as
+documentation. These methods should be overridden by specific implementations.
+What you get back from `CanonicalisationFactory.createCanonicaliser` will be
+an extension of this class.
+
+**Algorithm.name**
+
+This gives you the name (URI) that the algorithm *instance* goes by.
+
+```javascript
+algorithm.name();
+```
+
+```javascript
+var uri = algorithm.name();
+```
+
+**Algorithm.canonicalise**
+
+This is what does the meat of the work in most implementations.
+
+```javascript
+algorithm.canonicalise(node, cb);
+```
+
+```javascript
+algorithm.canonicalise(node, function(err, data) {
+  if (err) {
+    return console.warn(err);
+  }
+
+  console.log(data);
+});
+```
+
+Included Canonicalisation Algorithms
+------------------------------------
+
+There are two included algorithms, one of which is a specialisation of the
+other.
+
+**http://www.w3.org/2001/10/xml-exc-c14n#**
+
+* _uri_ - `http://www.w3.org/2001/10/xml-exc-c14n#`
+* _options_
+  * _includeComments_
+  * _inclusiveNamespaces_
+
+For a description of this algorithm and its options, see the [xml-exc-c14n specification](http://www.w3.org/TR/xml-exc-c14n/).
+
+**http://www.w3.org/2001/10/xml-exc-c14n#WithComments**
+
+* _uri_ - `http://www.w3.org/2001/10/xml-exc-c14n#WithComments`
+* _options_
+  * _inclusiveNamespaces_
+
+This is just a special version of `http://www.w3.org/2001/10/xml-exc-c14n#`
+with `includeComments` enabled.
 
 License
 -------
@@ -172,5 +251,4 @@ Contact
 
 * GitHub ([deoxxa](http://github.com/deoxxa))
 * Twitter ([@deoxxa](http://twitter.com/deoxxa))
-* ADN ([@deoxxa](https://alpha.app.net/deoxxa))
 * Email ([deoxxa@fknsrs.biz](mailto:deoxxa@fknsrs.biz))
