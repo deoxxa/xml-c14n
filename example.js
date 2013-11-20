@@ -18,8 +18,6 @@ console.log(xmlData);
 
 console.log("");
 
-console.log(document + "");
-
 canonicaliser.canonicalise(document.documentElement, function(err, res) {
   if (err) {
     return console.warn(err.stack);
