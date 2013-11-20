@@ -1,2 +1,32 @@
-exports.escape = require("./lib/escape");
-exports.exc_c14n = require("./lib/exc-c14n");
+var ExclusiveCanonicalisation = require("./lib/algorithm/exclusive-canonicalisation");
+
+var builtIn = {
+  algorithms: {
+    "http://www.w3.org/2001/10/xml-exc-c14n#": function(options) {
+      return new ExclusiveCanonicalisation(options);
+    },
+    "http://www.w3.org/2001/10/xml-exc-c14n#WithComments": function(options) {
+      options = Object.create(options || null);
+      options.includeComments = true;
+      return new ExclusiveCanonicalisation(options);
+    },
+  },
+};
+
+var CanonicalisationFactory = module.exports = function CanonicalisationFactory() {
+  if (!(this instanceof CanonicalisationFactory)) {
+    return new CanonicalisationFactory();
+  }
+
+  this.algorithms = Object.create(builtIn.algorithms);
+};
+
+CanonicalisationFactory.prototype.registerAlgorithm = function registerAlgorithm(uri, implementation) {
+  this.algorithms[uri] = implementation;
+
+  return this;
+};
+
+CanonicalisationFactory.prototype.createAlgorithm = function createAlgorithm(uri, options) {
+  return this.algorithms[uri](options);
+};
