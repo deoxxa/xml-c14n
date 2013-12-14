@@ -1,0 +1,9 @@
+<p0:a xmlns:p0="ns1">
+  <p0:a/>
+  <p0:a/>
+  <p0:a/>
+  <p0:a xmlns:p0="ns2"/>
+  <p0:a xmlns:p0="ns3"/>
+  <p0:a/>
+  <p0:a/>
+</p0:a>
